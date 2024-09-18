@@ -1,6 +1,7 @@
 import * as R from "ramda";
 import { DateTime } from "luxon";
 import { db } from "@/services/kysely";
+import { quadrantName, ringName } from "@/services/labels";
 
 type ResultSetRow = {
   id: number;
@@ -11,6 +12,7 @@ type ResultSetRow = {
   // moved: number;
   url: string | null;
   description: string | null;
+  tech_id: number;
 };
 
 function rowMapper(row: ResultSetRow): RadarEntry {
@@ -23,6 +25,7 @@ function rowMapper(row: ResultSetRow): RadarEntry {
     moved: 0,
     url: row.url || `#`,
     description: row.description,
+    techId: row.tech_id,
     // moved: random.pick([-1, 0, 1, 2]),
   };
 }
@@ -45,6 +48,7 @@ export type RadarEntry = {
   moved: 0 | -1 | 1 | 2;
   url: string;
   description: string | null;
+  techId: number;
 };
 
 export type Quadrant = {
@@ -56,8 +60,18 @@ export type Ring = {
   color: string;
 };
 
+export type RadarChartEntry = {
+  quadrant: number;
+  ring: number;
+  label: string;
+  active: boolean;
+  link: string;
+  moved: number;
+  description: string | null;
+};
+
 export type RadarConfiguration = {
-  entries: RadarEntry[];
+  entries: RadarChartEntry[];
   width?: number;
   height?: number;
   svg_id: string;
@@ -91,25 +105,13 @@ export type RadarData = BasicRadarData & {
 };
 
 export async function getAllRadars(): Promise<BasicRadarInfo[]> {
-  const radars = await db.selectFrom("radar").select(["id", "name"]).execute();
-  return radars;
-}
-
-export type Tech = {
-  id: number;
-  name: string;
-  quadrant: number;
-  url: string | null;
-  description: string | null;
-};
-
-export async function getAllTechs(): Promise<Tech[]> {
-  const techs = await db
-    .selectFrom("tech")
-    .select(["id", "name", "quadrant", "url", "description"])
+  const radars = await db
+    .selectFrom("radar")
+    .select(["id", "name"])
+    .orderBy("name asc")
+    .orderBy("id asc")
     .execute();
-
-  return techs;
+  return radars;
 }
 
 export async function updateBlip(
@@ -160,19 +162,19 @@ export async function createRadar(id: number): Promise<RadarData> {
     .select([
       "blip.id",
       "tech.name",
+      "tech.id as tech_id",
       "tech.quadrant",
       "tech.url",
       "tech.description",
       "blip.ring",
     ])
     .where("radar.id", "=", id)
+    .orderBy("tech.quadrant asc")
+    .orderBy("blip.ring asc")
+    .orderBy("tech.name asc")
     .execute();
 
   const techs = rows.map((row) => rowMapper(row));
-
-  const inversed = R.reverse(techs);
-  const deduped = R.uniqBy(R.prop("id"), inversed);
-  const filtered = deduped.filter((tech) => tech);
 
   const now = DateTime.fromJSDate(radar.created_at as Date);
 
@@ -181,18 +183,18 @@ export async function createRadar(id: number): Promise<RadarData> {
     date: now.toISO(),
     name: radar.name,
     quadrants: [
-      { name: "Languages & Frameworks" },
-      { name: "Datastores" },
-      { name: "Tools & Techniques" },
-      { name: "Platforms" },
+      { name: quadrantName(0) },
+      { name: quadrantName(1) },
+      { name: quadrantName(2) },
+      { name: quadrantName(3) },
     ],
     rings: [
-      { name: "ADOPT", color: "#5ba300" },
-      { name: "TRIAL", color: "#009eb0" },
-      { name: "ASSESS", color: "#c7ba00" },
-      { name: "HOLD", color: "#e09b96" },
+      { name: ringName(0), color: "#5ba300" },
+      { name: ringName(1), color: "#009eb0" },
+      { name: ringName(2), color: "#c7ba00" },
+      { name: ringName(3), color: "#e09b96" },
     ],
-    entries: filtered,
+    entries: techs,
     url: "https://dr-kobros.com",
   } satisfies RadarData;
 

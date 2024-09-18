@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "kysely-codegen": "kysely-codegen --dialect postgres"
   },
   "dependencies": {
     "@vercel/postgres-kysely": "^0.10.0",

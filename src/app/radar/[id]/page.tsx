@@ -1,11 +1,10 @@
-import RadarChart from "@/components/radar/RadarChart";
-import { createRadar, getAllTechs, updateBlip } from "@/services/radar";
+import Radar from "@/app/radar/[id]/Radar";
+import * as radars from "@/services/radar";
+import * as techs from "@/services/tech";
+import { getAllTechs } from "@/services/tech";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { cache } from "react";
-import styles from "./page.module.css";
-import { useFormState } from "react-dom";
-import Radar from "@/app/radar/[id]/Radar";
 
 type Props = {
   params: {
@@ -14,7 +13,7 @@ type Props = {
 };
 
 const getRadar = cache(async (id: string) => {
-  const radar = await createRadar(parseInt(id, 10));
+  const radar = await radars.createRadar(parseInt(id, 10));
 
   return radar;
 });
@@ -33,7 +32,24 @@ export const generateMetadata = async ({
   }
 };
 
-const blipper = async (prevState, formData: FormData) => {
+const createTech = async (prevState: techs.Tech[], formData: FormData) => {
+  "use server";
+  const tech = {
+    name: formData.get("name") as string,
+    quadrant: parseInt(formData.get("quadrant") as string, 10),
+    // url: formData.get("url") as string,
+    // description: formData.get("description") as string,
+  };
+
+  await techs.createTech({
+    name: tech.name,
+    quadrant: tech.quadrant,
+  });
+
+  return techs.getAllTechs();
+};
+
+const updateBlip = async (prevState: radars.RadarData, formData: FormData) => {
   "use server";
   const tech = {
     id: parseInt(formData.get("radar") as string, 10),
@@ -43,11 +59,9 @@ const blipper = async (prevState, formData: FormData) => {
 
   console.log(tech, "TECH");
 
-  await updateBlip(tech.id, tech.tech, tech.ring);
+  await radars.updateBlip(tech.id, tech.tech, tech.ring);
 
-  const radar = await createRadar(tech.id);
-
-  return radar;
+  return radars.createRadar(tech.id);
 };
 
 export default async function RadarPage({ params }: Props) {
@@ -56,7 +70,12 @@ export default async function RadarPage({ params }: Props) {
 
   return (
     <main>
-      <Radar radar={radar} techs={techs} blipper={blipper} />
+      <Radar
+        radar={radar}
+        techs={techs}
+        updateBlip={updateBlip}
+        createTech={createTech}
+      />
     </main>
   );
 }

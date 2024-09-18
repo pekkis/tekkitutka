@@ -15,11 +15,11 @@ const getRadarDefinition = (config: RadarConfiguration): RadarDefinition => {
       inactive: "#ddd",
     },
     print_layout: true,
-    links_in_new_tabs: true,
+    links_in_new_tabs: false,
     repo_url: "#",
     print_ring_descriptions_table: false,
     // define default font-family
-    font_family: "Arial, Helvetica",
+    font_family: "'Open Sans', sans-serif",
 
     ...config,
   };
@@ -543,9 +543,11 @@ export function radar_visualization(conf: RadarConfiguration) {
   blips.each(function (d) {
     let blip = d3.select(this);
 
+    console.log("BLIP", d);
+
     // blip link
     if (d.active && Object.hasOwn(d, "link") && d.link) {
-      blip = blip.append("a").attr("xlink:href", d.link);
+      blip = blip.append("a").attr("xlink:href", `/tech/${d.techId}`);
 
       if (config.links_in_new_tabs) {
         blip.attr("target", "_blank");

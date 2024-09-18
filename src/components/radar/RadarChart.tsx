@@ -35,7 +35,7 @@ const RadarChart: FC<Props> = ({ data }) => {
       scale,
       repo_url: data.url,
       title: data.name,
-      date: data.date,
+      date: data.date as string,
       quadrants: data.quadrants,
       rings: data.rings,
       entries: data.entries.map((entry) => {

@@ -95,6 +95,57 @@ export async function getAllRadars(): Promise<BasicRadarInfo[]> {
   return radars;
 }
 
+export type Tech = {
+  id: number;
+  name: string;
+  quadrant: number;
+  url: string | null;
+  description: string | null;
+};
+
+export async function getAllTechs(): Promise<Tech[]> {
+  const techs = await db
+    .selectFrom("tech")
+    .select(["id", "name", "quadrant", "url", "description"])
+    .execute();
+
+  return techs;
+}
+
+export async function updateBlip(
+  radarId: number,
+  techId: number,
+  ring: number
+): Promise<void> {
+  if (isNaN(ring)) {
+    await db
+      .deleteFrom("blip")
+      .where("radar_id", "=", radarId)
+      .where("tech_id", "=", techId)
+      .execute();
+
+    return;
+  }
+
+  try {
+    await db
+      .insertInto("blip")
+      .values({
+        radar_id: radarId,
+        tech_id: techId,
+        ring,
+      })
+      .execute();
+  } catch {
+    await db
+      .updateTable("blip")
+      .set({ ring })
+      .where("radar_id", "=", radarId)
+      .where("tech_id", "=", techId)
+      .execute();
+  }
+}
+
 export async function createRadar(id: number): Promise<RadarData> {
   const radar = await db
     .selectFrom("radar")

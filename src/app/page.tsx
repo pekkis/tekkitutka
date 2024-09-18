@@ -1,23 +1,21 @@
-import { db } from "@/services/kysely";
+import { getAllRadars } from "@/services/radar";
 import Link from "next/link";
 
 export default async function Home() {
-  const radars = await db.selectFrom("radar").select(["id", "name"]).execute();
+  const radars = await getAllRadars();
 
   return (
-    <div>
-      <h1>Tekkitutkat!</h1>
-      <main>
-        <ul>
-          {radars.map((radar) => {
-            return (
-              <li key={radar.id}>
-                <Link href={`/radar/${radar.id}`}>{radar.name}</Link>
-              </li>
-            );
-          })}
-        </ul>
-      </main>
-    </div>
+    <>
+      <h1>All tech radars</h1>
+      <ul>
+        {radars.map((radar) => {
+          return (
+            <li key={radar.id}>
+              <Link href={`/radar/${radar.id}`}>{radar.name}</Link>
+            </li>
+          );
+        })}
+      </ul>
+    </>
   );
 }

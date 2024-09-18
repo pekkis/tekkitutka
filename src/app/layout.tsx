@@ -1,4 +1,8 @@
+import "normalize.css";
 import "./globals.css";
+import Header from "@/app/Header";
+import Footer from "@/app/Footer";
+import Main from "@/app/Main";
 
 export default function RootLayout({
   children,
@@ -7,7 +11,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <Header />
+
+        <Main>{children}</Main>
+
+        <Footer />
+      </body>
     </html>
   );
 }

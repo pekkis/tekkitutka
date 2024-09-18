@@ -1,9 +1,10 @@
 "use client";
 
 import { FC, useDeferredValue, useEffect, useId, useRef } from "react";
-import { radar_visualization, RadarData } from "@/services/client-radar";
+import { radar_visualization } from "@/services/client-radar";
 import styles from "./RadarChart.module.css";
 import { useResizeObserver } from "usehooks-ts";
+import { RadarData } from "@/services/radar";
 
 type Props = {
   data: RadarData;

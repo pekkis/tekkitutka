@@ -1,69 +1,8 @@
+import { RadarConfiguration } from "@/services/radar";
 import * as d3 from "d3";
-
-export type RadarEntry = {
-  quadrant: 0 | 1 | 2 | 3;
-  ring: 0 | 1 | 2 | 3;
-  name: string;
-  active: boolean;
-  moved: 0 | -1 | 1 | 2;
-  url: string;
-  description?: string;
-};
-
-type ChartRadarEntry = {
-  quadrant: 0 | 1 | 2 | 3;
-  ring: 0 | 1 | 2 | 3;
-  moved: 0 | -1 | 1 | 2;
-  label: string;
-  link: string;
-  description?: string;
-};
-
-export type Quadrant = {
-  name: string;
-};
-
-export type Ring = {
-  name: string;
-  color: string;
-};
-
-type RadarConfiguration = {
-  entries: ChartRadarEntry[];
-  width?: number;
-  height?: number;
-  svg_id: string;
-  colors?: {
-    background: string;
-    grid: string;
-    inactive: string;
-  };
-  print_layout?: boolean;
-  links_in_new_tabs?: boolean;
-  repo_url?: string;
-  print_ring_descriptions_table?: boolean;
-  scale: number;
-  title: string;
-  date: string;
-  quadrants: Quadrant[];
-  rings: Ring[];
-};
 
 type RadarDefinition = Required<RadarConfiguration> & {
   font_family: string;
-};
-
-export type BasicRadarData = {
-  id: string;
-  name: string;
-  date: string;
-};
-
-export type RadarData = BasicRadarData & {
-  quadrants: Quadrant[];
-  rings: Ring[];
-  entries: RadarEntry[];
-  url: string;
 };
 
 const getRadarDefinition = (config: RadarConfiguration): RadarDefinition => {

@@ -40,6 +40,12 @@ export default async function TechPage({ params }: Props) {
 
       <p>{tech.description}</p>
 
+      {tech.url && (
+        <p>
+          <Link href={tech.url} target="_blank" />
+        </p>
+      )}
+
       <h2>Radars containing this tech</h2>
 
       <ul>

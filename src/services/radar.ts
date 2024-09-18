@@ -177,7 +177,7 @@ export async function createRadar(id: number): Promise<RadarData> {
   const now = DateTime.fromJSDate(radar.created_at as Date);
 
   const ret = {
-    id: 1,
+    id: radar.id,
     date: now.toISO(),
     name: radar.name,
     quadrants: [

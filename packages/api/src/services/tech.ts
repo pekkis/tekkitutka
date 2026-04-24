@@ -1,7 +1,8 @@
 import { db } from "./kysely.js";
+import { generatePublicId } from "./publicId.js";
 
 export type Tech = {
-  id: number;
+  publicId: string;
   name: string;
   quadrant: number;
   url: string | null;
@@ -14,46 +15,71 @@ type NewTech = {
 };
 
 export async function createTech(tech: NewTech): Promise<void> {
-  await db.insertInto("tech").values(tech).execute();
+  await db
+    .insertInto("tech")
+    .values({ ...tech, public_id: generatePublicId() })
+    .execute();
 }
 
-export async function getRadarsUsing(id: number): Promise<
+export async function getRadarsUsing(techPublicId: string): Promise<
   {
-    id: number;
+    publicId: string;
     name: string;
     ring: number;
     version: number;
   }[]
 > {
-  const teams = await db
+  const rows = await db
     .selectFrom("tech")
     .innerJoin("blip", "tech.id", "blip.tech_id")
     .innerJoin("radar_version", "blip.radar_version_id", "radar_version.id")
     .innerJoin("radar", "radar_version.radar_id", "radar.id")
-    .select(["radar.name", "radar.id", "blip.ring", "radar_version.version"])
-    .where("tech.id", "=", id)
+    .select([
+      "radar.name",
+      "radar.public_id as radar_public_id",
+      "blip.ring",
+      "radar_version.version",
+    ])
+    .where("tech.public_id", "=", techPublicId)
     .execute();
 
-  return teams;
+  return rows.map(r => ({
+    publicId: r.radar_public_id,
+    name: r.name,
+    ring: r.ring,
+    version: r.version,
+  }));
 }
 
 export async function getAllTechs(): Promise<Tech[]> {
   const techs = await db
     .selectFrom("tech")
-    .select(["id", "name", "quadrant", "url", "description"])
+    .select(["public_id", "name", "quadrant", "url", "description"])
     .orderBy("quadrant", "asc")
     .orderBy("name", "asc")
     .execute();
 
-  return techs;
+  return techs.map(t => ({
+    publicId: t.public_id,
+    name: t.name,
+    quadrant: t.quadrant,
+    url: t.url,
+    description: t.description,
+  }));
 }
 
-export async function getTech(id: number): Promise<Tech> {
-  const techs = await db
+export async function getTech(publicId: string): Promise<Tech> {
+  const t = await db
     .selectFrom("tech")
-    .select(["id", "name", "quadrant", "url", "description"])
-    .where("id", "=", id)
+    .select(["public_id", "name", "quadrant", "url", "description"])
+    .where("public_id", "=", publicId)
     .executeTakeFirstOrThrow();
 
-  return techs;
+  return {
+    publicId: t.public_id,
+    name: t.name,
+    quadrant: t.quadrant,
+    url: t.url,
+    description: t.description,
+  };
 }

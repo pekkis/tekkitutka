@@ -2,15 +2,14 @@
 import Layout from "@/layouts/Layout.astro";
 import { api } from "@/services/api";
 
-const { id } = Astro.params;
-const techId = parseInt(id!, 10);
+const { publicId } = Astro.params;
 
 let tech;
 let radars;
 let rings;
 try {
-  tech = await api.techs.get(techId);
-  radars = await api.techs.getRadars(techId);
+  tech = await api.techs.get(publicId!);
+  radars = await api.techs.getRadars(publicId!);
   rings = await api.labels.rings();
 } catch {
   return new Response(null, { status: 404, statusText: "Not Found" });
@@ -39,7 +38,7 @@ try {
       {
         radars.map((radar) => (
           <li>
-            <a href={`/radar/${radar.id}`}>{radar.name}</a> - {rings[radar.ring].name}
+            <a href={`/radar/${radar.publicId}/v/${radar.version}`}>{radar.name} (v{radar.version})</a> - {rings[radar.ring].name}
           </li>
         ))
       }

@@ -13,7 +13,6 @@ type Props = {
 
 const Radar: FC<Props> = ({ radar, techs }) => {
   const [currentTechs, setCurrentTechs] = useState(techs);
-  const [currentRadar, setCurrentRadar] = useState(radar);
 
   const grouped = groupBy<Tech>((tech: Tech) => tech.quadrant.toString(), currentTechs);
 
@@ -29,21 +28,15 @@ const Radar: FC<Props> = ({ radar, techs }) => {
   const handleUpdateBlip = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const techId = parseInt(formData.get("tech") as string, 10);
+    const techPublicId = formData.get("tech") as string;
     const ring = parseInt(formData.get("ring") as string, 10);
-    const updatedRadar = await api.radars.updateBlip(
-      currentRadar.id,
-      techId,
-      ring,
-      currentRadar.versionId,
-    );
-    setCurrentRadar(updatedRadar);
+    await api.radars.updateBlip(radar.publicId, techPublicId, ring, radar.version);
+    window.location.reload();
   };
 
-  const handleSwitchVersion = async (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const version = parseInt(event.target.value, 10);
-    const updated = await api.radars.get(currentRadar.id, version);
-    setCurrentRadar(updated);
+  const handleSwitchVersion = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const version = event.target.value;
+    window.location.href = `/radar/${radar.publicId}/v/${version}`;
   };
 
   const handleReleaseVersion = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -51,9 +44,8 @@ const Radar: FC<Props> = ({ radar, techs }) => {
     const formData = new FormData(event.currentTarget);
     const releaseDate = formData.get("releaseDate") as string;
     const label = (formData.get("label") as string) || null;
-    await api.radars.releaseVersion(currentRadar.id, releaseDate, label, true);
-    const updated = await api.radars.get(currentRadar.id);
-    setCurrentRadar(updated);
+    await api.radars.releaseVersion(radar.publicId, releaseDate, label, true);
+    window.location.href = `/radar/${radar.publicId}`;
   };
 
   const today = new Date().toISOString().slice(0, 10);
@@ -62,16 +54,16 @@ const Radar: FC<Props> = ({ radar, techs }) => {
     <>
       <div className={styles.versionHeader}>
         <h2>
-          {currentRadar.name} — v{currentRadar.version}
-          {currentRadar.label ? ` (${currentRadar.label})` : ""}
+          {radar.name} — v{radar.version}
+          {radar.label ? ` (${radar.label})` : ""}
         </h2>
-        <p>Release date: {currentRadar.releaseDate}</p>
-        {currentRadar.versions.length > 1 && (
+        <p>Release date: {radar.releaseDate}</p>
+        {radar.versions.length > 1 && (
           <label>
             View version:{" "}
-            <select value={currentRadar.version} onChange={handleSwitchVersion}>
-              {currentRadar.versions.map(v => (
-                <option key={v.versionId} value={v.version}>
+            <select value={radar.version} onChange={handleSwitchVersion}>
+              {radar.versions.map(v => (
+                <option key={v.version} value={v.version}>
                   v{v.version}
                   {v.label ? ` — ${v.label}` : ""} ({v.releaseDate})
                 </option>
@@ -85,7 +77,7 @@ const Radar: FC<Props> = ({ radar, techs }) => {
         <input type="text" name="name" placeholder="Tech name" />
         <select name="quadrant">
           <option value="">Select a quadrant</option>
-          {currentRadar.quadrants.map((q, i) => (
+          {radar.quadrants.map((q, i) => (
             <option key={i} value={i}>
               {q.name}
             </option>
@@ -98,12 +90,12 @@ const Radar: FC<Props> = ({ radar, techs }) => {
         <select name="tech">
           <option value="">Select a tech</option>
 
-          {currentRadar.quadrants.map((q, quadrant) => {
+          {radar.quadrants.map((q, quadrant) => {
             return (
               <optgroup key={quadrant} label={q.name}>
                 {(grouped[quadrant.toString()] as Tech[])?.map(tech => {
                   return (
-                    <option key={tech.id} value={tech.id}>
+                    <option key={tech.publicId} value={tech.publicId}>
                       {tech.name}
                     </option>
                   );
@@ -114,7 +106,7 @@ const Radar: FC<Props> = ({ radar, techs }) => {
         </select>
         <select name="ring">
           <option value="">Select ring</option>
-          {currentRadar.rings.map((ring, i) => {
+          {radar.rings.map((ring, i) => {
             return (
               <option key={i} value={i}>
                 {ring.name}
@@ -130,7 +122,7 @@ const Radar: FC<Props> = ({ radar, techs }) => {
         <input type="text" name="label" placeholder="Label (optional, e.g. 2026-Q2)" />
         <button>release</button>
       </form>
-      <RadarChart data={currentRadar} />
+      <RadarChart data={radar} />
     </>
   );
 };

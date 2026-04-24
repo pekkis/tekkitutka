@@ -20,6 +20,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/packages/api/node_modules ./packages/api/node_modules
 COPY packages/api/src/db ./packages/api/src/db
+COPY packages/api/src/services ./packages/api/src/services
 COPY packages/api/package.json packages/api/tsconfig.json ./packages/api/
 
 WORKDIR /app/packages/api

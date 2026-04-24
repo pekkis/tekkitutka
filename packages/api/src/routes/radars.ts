@@ -8,30 +8,28 @@ app.get("/", async c => {
   return c.json(allRadars);
 });
 
-app.get("/:id", async c => {
-  const id = parseInt(c.req.param("id"), 10);
-  const versionParam = c.req.query("version");
-  const version = versionParam ? parseInt(versionParam, 10) : undefined;
-  const radar = await radars.getRadar(id, version);
+app.get("/:publicId", async c => {
+  const publicId = c.req.param("publicId");
+  const radar = await radars.getRadar(publicId);
   return c.json(radar);
 });
 
-app.get("/:id/versions/:version", async c => {
-  const id = parseInt(c.req.param("id"), 10);
+app.get("/:publicId/versions/:version", async c => {
+  const publicId = c.req.param("publicId");
   const version = parseInt(c.req.param("version"), 10);
-  const radar = await radars.getRadar(id, version);
+  const radar = await radars.getRadar(publicId, version);
   return c.json(radar);
 });
 
-app.post("/:id/versions", async c => {
-  const id = parseInt(c.req.param("id"), 10);
+app.post("/:publicId/versions", async c => {
+  const publicId = c.req.param("publicId");
   const body = await c.req.json<{
     releaseDate: string;
     label?: string | null;
     copyBlips?: boolean;
   }>();
   const newVersion = await radars.releaseNewVersion(
-    id,
+    publicId,
     body.releaseDate,
     body.label ?? null,
     body.copyBlips ?? true,
@@ -39,12 +37,15 @@ app.post("/:id/versions", async c => {
   return c.json(newVersion);
 });
 
-app.post("/:id/blips", async c => {
-  const id = parseInt(c.req.param("id"), 10);
-  const body = await c.req.json<{ techId: number; ring: number; versionId?: number }>();
-  const versionId = body.versionId ?? (await radars.getLatestVersionId(id));
-  await radars.updateBlip(versionId, body.techId, body.ring);
-  const radar = await radars.getRadar(id);
+app.post("/:publicId/blips", async c => {
+  const publicId = c.req.param("publicId");
+  const body = await c.req.json<{
+    techPublicId: string;
+    ring: number;
+    version?: number;
+  }>();
+  await radars.updateBlip(publicId, body.techPublicId, body.ring, body.version);
+  const radar = await radars.getRadar(publicId, body.version);
   return c.json(radar);
 });
 

@@ -12,35 +12,27 @@ export const api = {
   radars: {
     getAll: () => client.get("api/radars").json<RadarListItem[]>(),
 
-    get: (id: number, version?: number) => {
-      const search = version === undefined ? "" : `?version=${version}`;
-      return client.get(`api/radars/${id}${search}`).json<RadarData>();
-    },
+    get: (publicId: string) => client.get(`api/radars/${publicId}`).json<RadarData>(),
 
-    getVersion: (id: number, version: number) =>
-      client.get(`api/radars/${id}/versions/${version}`).json<RadarData>(),
+    getVersion: (publicId: string, version: number) =>
+      client.get(`api/radars/${publicId}/versions/${version}`).json<RadarData>(),
 
     releaseVersion: (
-      id: number,
+      publicId: string,
       releaseDate: string,
       label?: string | null,
       copyBlips = true,
     ) =>
       client
-        .post(`api/radars/${id}/versions`, {
+        .post(`api/radars/${publicId}/versions`, {
           json: { releaseDate, label: label ?? null, copyBlips },
         })
         .json<RadarVersionInfo>(),
 
-    updateBlip: (
-      radarId: number,
-      techId: number,
-      ring: number,
-      versionId?: number,
-    ) =>
+    updateBlip: (radarPublicId: string, techPublicId: string, ring: number, version?: number) =>
       client
-        .post(`api/radars/${radarId}/blips`, {
-          json: { techId, ring, ...(versionId === undefined ? {} : { versionId }) },
+        .post(`api/radars/${radarPublicId}/blips`, {
+          json: { techPublicId, ring, ...(version === undefined ? {} : { version }) },
         })
         .json<RadarData>(),
   },
@@ -48,12 +40,12 @@ export const api = {
   techs: {
     getAll: () => client.get("api/techs").json<Tech[]>(),
 
-    get: (id: number) => client.get(`api/techs/${id}`).json<Tech>(),
+    get: (publicId: string) => client.get(`api/techs/${publicId}`).json<Tech>(),
 
-    getRadars: (id: number) =>
+    getRadars: (publicId: string) =>
       client
-        .get(`api/techs/${id}/radars`)
-        .json<{ id: number; name: string; ring: number; version: number }[]>(),
+        .get(`api/techs/${publicId}/radars`)
+        .json<{ publicId: string; name: string; ring: number; version: number }[]>(),
 
     create: (name: string, quadrant: number) =>
       client.post("api/techs", { json: { name, quadrant } }).json<Tech[]>(),
@@ -77,7 +69,7 @@ export type RadarEntry = {
   moved: 0 | -1 | 1 | 2;
   url: string;
   description: string | null;
-  techId: number;
+  techPublicId: string;
 };
 
 export type Quadrant = {
@@ -90,7 +82,6 @@ export type Ring = {
 };
 
 export type RadarVersionInfo = {
-  versionId: number;
   version: number;
   label: string | null;
   releaseDate: string;
@@ -99,13 +90,13 @@ export type RadarVersionInfo = {
 };
 
 export type RadarListItem = {
-  id: number;
+  publicId: string;
   name: string;
   latestVersion: RadarVersionInfo | null;
 };
 
 export type RadarData = {
-  id: number;
+  publicId: string;
   name: string;
   date: string | null;
   quadrants: Quadrant[];
@@ -115,12 +106,11 @@ export type RadarData = {
   version: number;
   label: string | null;
   releaseDate: string;
-  versionId: number;
   versions: RadarVersionInfo[];
 };
 
 export type Tech = {
-  id: number;
+  publicId: string;
   name: string;
   quadrant: number;
   url: string | null;

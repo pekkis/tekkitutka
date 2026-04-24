@@ -41,7 +41,7 @@ const RadarChart: FC<Props> = ({ data }) => {
           quadrant: entry.quadrant,
           ring: entry.ring,
           label: entry.name,
-          techId: entry.techId,
+          techPublicId: entry.techPublicId,
           active: entry.active,
           link: entry.url,
           moved: entry.moved,

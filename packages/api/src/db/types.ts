@@ -28,6 +28,7 @@ export interface Radar {
   created_at: Generated<Timestamp | null>;
   id: Generated<number>;
   name: string;
+  public_id: string;
 }
 
 export interface RadarVersion {
@@ -51,6 +52,7 @@ export interface Tech {
   description: string | null;
   id: Generated<number>;
   name: string;
+  public_id: string;
   quadrant: number;
   updated_at: Generated<Timestamp | null>;
   url: string | null;

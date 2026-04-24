@@ -8,15 +8,15 @@ app.get("/", async c => {
   return c.json(allTechs);
 });
 
-app.get("/:id", async c => {
-  const id = parseInt(c.req.param("id"), 10);
-  const tech = await techs.getTech(id);
+app.get("/:publicId", async c => {
+  const publicId = c.req.param("publicId");
+  const tech = await techs.getTech(publicId);
   return c.json(tech);
 });
 
-app.get("/:id/radars", async c => {
-  const id = parseInt(c.req.param("id"), 10);
-  const radarList = await techs.getRadarsUsing(id);
+app.get("/:publicId/radars", async c => {
+  const publicId = c.req.param("publicId");
+  const radarList = await techs.getRadarsUsing(publicId);
   return c.json(radarList);
 });
 

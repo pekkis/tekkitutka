@@ -3,12 +3,12 @@ import Layout from "@/layouts/Layout.astro";
 import Radar from "@/components/radar/Radar";
 import { api } from "@/services/api";
 
-const { id } = Astro.params;
+const { publicId } = Astro.params;
 
 let radar;
 let techs;
 try {
-  radar = await api.radars.get(parseInt(id!, 10));
+  radar = await api.radars.get(publicId!);
   techs = await api.techs.getAll();
 } catch {
   return new Response(null, { status: 404, statusText: "Not Found" });

@@ -1,0 +1,21 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Radar from "@/components/radar/Radar";
+import { api } from "@/services/api";
+
+const { publicId, version } = Astro.params;
+const versionNum = parseInt(version!, 10);
+
+let radar;
+let techs;
+try {
+  radar = await api.radars.getVersion(publicId!, versionNum);
+  techs = await api.techs.getAll();
+} catch {
+  return new Response(null, { status: 404, statusText: "Not Found" });
+}
+---
+
+<Layout title={`${radar.name} — v${radar.version}`}>
+  <Radar radar={radar} techs={techs} client:load />
+</Layout>

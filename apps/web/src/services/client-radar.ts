@@ -524,7 +524,7 @@ export function radar_visualization(conf: RadarConfiguration) {
 
     // blip link
     if (d.active && Object.hasOwn(d, "link") && d.link) {
-      blip = blip.append("a").attr("xlink:href", `/tech/${d.techId}`);
+      blip = blip.append("a").attr("xlink:href", `/tech/${d.techPublicId}`);
 
       if (config.links_in_new_tabs) {
         blip.attr("target", "_blank");

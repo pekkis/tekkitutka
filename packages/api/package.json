@@ -16,6 +16,7 @@
     "hono": "^4.12.14",
     "kysely": "^0.28.16",
     "luxon": "^3.7.2",
+    "nanoid": "5.1.9",
     "pg": "^8.20.0"
   },
   "devDependencies": {

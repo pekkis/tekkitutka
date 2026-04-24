@@ -12,8 +12,8 @@
     "db:seed": "tsx src/db/seed.ts"
   },
   "dependencies": {
-    "@hono/node-server": "^1.14.3",
-    "hono": "^4.7.13",
+    "@hono/node-server": "^2.0.0",
+    "hono": "^4.12.14",
     "kysely": "^0.28.16",
     "luxon": "^3.7.2",
     "pg": "^8.20.0"

@@ -3,40 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "db:migrate": "tsx src/db/migrate.ts",
-    "db:seed": "tsx src/db/seed.ts",
-    "kysely-codegen": "kysely-codegen --dialect postgres"
-  },
-  "dependencies": {
-    "d3": "^7.9.0",
-    "kysely": "^0.28.16",
-    "luxon": "^3.7.2",
-    "next": "^16.2.4",
-    "normalize.css": "^8.0.1",
-    "pg": "^8.20.0",
-    "ramda": "^0.32.0",
-    "react": "^19.2.5",
-    "react-dom": "^19.2.5",
-    "usehooks-ts": "^3.1.1",
-    "vercel": "^51.8.0"
+    "dev": "pnpm -r --parallel run dev",
+    "build": "pnpm -r run build",
+    "lint": "pnpm -r run lint",
+    "fmt": "oxfmt --write .",
+    "fmt:check": "oxfmt --check ."
   },
   "devDependencies": {
-    "@types/d3": "^7.4.3",
-    "@types/luxon": "^3.7.1",
-    "@types/node": "^25.6.0",
-    "@types/ramda": "^0.31.1",
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
-    "csv-parse": "^6.2.1",
-    "eslint": "^10.2.1",
-    "eslint-config-next": "16.2.4",
-    "kysely-codegen": "^0.20.0",
-    "tsx": "^4.21.0",
-    "typescript": "^6.0.3"
+    "oxfmt": "^0.46.0",
+    "oxlint": "^1.61.0"
   },
   "packageManager": "pnpm@10.33.0"
 }

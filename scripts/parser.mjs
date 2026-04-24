@@ -33,7 +33,7 @@ const records = parse(input, {
 
 const set = new Set();
 
-records.forEach((record) => {
+records.forEach(record => {
   set.add(record.Quadrant);
 });
 
@@ -52,11 +52,7 @@ for (const record of records) {
 
   console.log("DATA", data);
 
-  const ret = await db
-    .insertInto("tech")
-    .values(data)
-    .returning("id")
-    .execute();
+  const ret = await db.insertInto("tech").values(data).returning("id").execute();
 
   console.log(ret);
 
@@ -85,11 +81,8 @@ throw new Error("STOP");
     },
 */
 
-const json = records.map((record) => {
-  if (
-    ringMap[record.Ring] === undefined ||
-    quadrantMap[record.Quadrant] === undefined
-  ) {
+const json = records.map(record => {
+  if (ringMap[record.Ring] === undefined || quadrantMap[record.Quadrant] === undefined) {
     console.log("ERROR: ", record);
     return;
   }

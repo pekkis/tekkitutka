@@ -1,0 +1,29 @@
+{
+  "name": "@tekkitutka/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "build": "tsc",
+    "lint": "oxlint",
+    "db:migrate": "tsx src/db/migrate.ts",
+    "db:seed": "tsx src/db/seed.ts"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.14.3",
+    "hono": "^4.7.13",
+    "kysely": "^0.28.16",
+    "luxon": "^3.7.2",
+    "pg": "^8.20.0"
+  },
+  "devDependencies": {
+    "@types/luxon": "^3.7.1",
+    "@types/node": "^25.6.0",
+    "@types/pg": "^8.20.0",
+    "oxlint": "^1.61.0",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3"
+  }
+}

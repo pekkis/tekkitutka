@@ -1,4 +1,11 @@
-import { createKysely } from "@vercel/postgres-kysely";
+import { Kysely, PostgresDialect } from "kysely";
 import { DB } from "kysely-codegen";
+import pg from "pg";
 
-export const db = createKysely<DB>();
+export const db = new Kysely<DB>({
+  dialect: new PostgresDialect({
+    pool: new pg.Pool({
+      connectionString: process.env.DATABASE_URL,
+    }),
+  }),
+});

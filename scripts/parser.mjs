@@ -3,7 +3,7 @@ import { parse } from "csv-parse/sync";
 import fs from "node:fs";
 import * as R from "ramda";
 
-import { createKysely } from "@vercel/postgres-kysely";
+import { createKysely } from "kysely";
 
 export const db = createKysely();
 

@@ -1,4 +1,4 @@
-import { ringName } from "@/services/labels";
+import * as labels from "@/services/labels";
 import * as techs from "@/services/tech";
 import { Metadata } from "next";
 import Link from "next/link";
@@ -33,6 +33,7 @@ export const generateMetadata = async ({
 export default async function TechPage({ params }: Props) {
   const tech = await getTech(params.id);
   const radars = await techs.getRadarsUsing(parseInt(params.id, 10));
+  const rings = await labels.getAllRings();
 
   return (
     <section>
@@ -52,7 +53,7 @@ export default async function TechPage({ params }: Props) {
         {radars.map((radar) => (
           <li key={radar.id}>
             <Link href={`/radar/${radar.id}`}>{radar.name}</Link> -{" "}
-            {ringName(radar.ring)}
+            {rings[radar.ring].name}
           </li>
         ))}
       </ul>

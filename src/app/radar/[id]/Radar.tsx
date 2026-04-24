@@ -7,7 +7,6 @@ import { FC } from "react";
 import { useFormState } from "react-dom";
 import styles from "./Radar.module.css";
 import { Tech } from "@/services/tech";
-import { quadrantName } from "@/services/labels";
 import { groupBy } from "ramda";
 
 type Props = {
@@ -16,25 +15,6 @@ type Props = {
   updateBlip: (prevState: RadarData, formData: FormData) => Promise<RadarData>;
   createTech: (prevState: Tech[], formData: FormData) => Promise<Tech[]>;
 };
-
-const rings = [
-  {
-    value: 0,
-    name: "ADOPT",
-  },
-  {
-    value: 1,
-    name: "TRIAL",
-  },
-  {
-    value: 2,
-    name: "ASSESS",
-  },
-  {
-    value: 3,
-    name: "HOLD",
-  },
-];
 
 const Radar: FC<Props> = ({ radar, techs, updateBlip, createTech }) => {
   const [currentTechs, createTechAction] = useFormState(createTech, techs);
@@ -52,10 +32,11 @@ const Radar: FC<Props> = ({ radar, techs, updateBlip, createTech }) => {
         <input type="text" name="name" placeholder="Tech name" />
         <select name="quadrant">
           <option value="">Select a quadrant</option>
-          <option value="0">{quadrantName(0)}</option>
-          <option value="1">{quadrantName(1)}</option>
-          <option value="2">{quadrantName(2)}</option>
-          <option value="3">{quadrantName(3)}</option>
+          {currentRadar.quadrants.map((q, i) => (
+            <option key={i} value={i}>
+              {q.name}
+            </option>
+          ))}
         </select>
         <button>add tech</button>
       </form>
@@ -65,10 +46,10 @@ const Radar: FC<Props> = ({ radar, techs, updateBlip, createTech }) => {
         <select name="tech">
           <option value="">Select a tech</option>
 
-          {[0, 1, 2, 3].map((quadrant) => {
+          {currentRadar.quadrants.map((q, quadrant) => {
             return (
-              <optgroup key={quadrant} label={quadrantName(quadrant)}>
-                {(grouped[quadrant.toString()] as Tech[]).map((tech) => {
+              <optgroup key={quadrant} label={q.name}>
+                {(grouped[quadrant.toString()] as Tech[])?.map((tech) => {
                   return (
                     <option key={tech.id} value={tech.id}>
                       {tech.name}
@@ -81,9 +62,9 @@ const Radar: FC<Props> = ({ radar, techs, updateBlip, createTech }) => {
         </select>
         <select name="ring">
           <option value="">Select ring</option>
-          {rings.map((ring) => {
+          {currentRadar.rings.map((ring, i) => {
             return (
-              <option key={ring.value} value={ring.value}>
+              <option key={i} value={i}>
                 {ring.name}
               </option>
             );

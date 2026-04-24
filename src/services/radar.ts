@@ -1,7 +1,7 @@
 import * as R from "ramda";
 import { DateTime } from "luxon";
 import { db } from "@/services/kysely";
-import { quadrantName, ringName } from "@/services/labels";
+import { getAllQuadrants, getAllRings } from "@/services/labels";
 
 type ResultSetRow = {
   id: number;
@@ -178,22 +178,15 @@ export async function createRadar(id: number): Promise<RadarData> {
 
   const now = DateTime.fromJSDate(radar.created_at as Date);
 
+  const quadrants = await getAllQuadrants();
+  const rings = await getAllRings();
+
   const ret = {
     id: radar.id,
     date: now.toISO(),
     name: radar.name,
-    quadrants: [
-      { name: quadrantName(0) },
-      { name: quadrantName(1) },
-      { name: quadrantName(2) },
-      { name: quadrantName(3) },
-    ],
-    rings: [
-      { name: ringName(0), color: "#5ba300" },
-      { name: ringName(1), color: "#009eb0" },
-      { name: ringName(2), color: "#c7ba00" },
-      { name: ringName(3), color: "#e09b96" },
-    ],
+    quadrants: quadrants.map((q) => ({ name: q.name })),
+    rings: rings.map((r) => ({ name: r.name, color: r.color })),
     entries: techs,
     url: "https://dr-kobros.com",
   } satisfies RadarData;

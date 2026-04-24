@@ -12,6 +12,12 @@ const radars = await api.radars.getAll();
       radars.map((radar) => (
         <li>
           <a href={`/radar/${radar.id}`}>{radar.name}</a>
+          {radar.latestVersion && (
+            <span>
+              {" "}
+              — v{radar.latestVersion.version} ({radar.latestVersion.releaseDate})
+            </span>
+          )}
         </li>
       ))
     }

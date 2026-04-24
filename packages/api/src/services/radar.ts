@@ -7,35 +7,12 @@ type ResultSetRow = {
   quadrant: number;
   ring: number;
   name: string;
-  // active: boolean;
-  // moved: number;
   url: string | null;
   description: string | null;
   tech_id: number;
 };
 
-function rowMapper(row: ResultSetRow): RadarEntry {
-  return {
-    id: row.id,
-    quadrant: row.quadrant as QuadrantId,
-    ring: row.ring as RingId,
-    name: row.name,
-    active: true,
-    moved: 0,
-    url: row.url || `#`,
-    description: row.description,
-    techId: row.tech_id,
-    // moved: random.pick([-1, 0, 1, 2]),
-  };
-}
-
-type BasicRadarInfo = {
-  id: number;
-  name: string;
-};
-
 type QuadrantId = 0 | 1 | 2 | 3;
-
 type RingId = 0 | 1 | 2 | 3;
 
 export type RadarEntry = {
@@ -90,6 +67,21 @@ export type RadarConfiguration = {
   rings: Ring[];
 };
 
+export type RadarVersionInfo = {
+  versionId: number;
+  version: number;
+  label: string | null;
+  releaseDate: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type BasicRadarInfo = {
+  id: number;
+  name: string;
+  latestVersion: RadarVersionInfo | null;
+};
+
 export type BasicRadarData = {
   id: number;
   name: string;
@@ -101,7 +93,44 @@ export type RadarData = BasicRadarData & {
   rings: Ring[];
   entries: RadarEntry[];
   url: string;
+  version: number;
+  label: string | null;
+  releaseDate: string;
+  versionId: number;
+  versions: RadarVersionInfo[];
 };
+
+function toIsoDate(value: Date | string): string {
+  if (value instanceof Date) {
+    return DateTime.fromJSDate(value).toISODate() ?? value.toISOString().slice(0, 10);
+  }
+  return value;
+}
+
+function toIsoDateTime(value: Date | string): string {
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+  return new Date(value).toISOString();
+}
+
+function mapVersionInfo(v: {
+  id: number;
+  version: number;
+  label: string | null;
+  release_date: Date | string;
+  created_at: Date | string;
+  updated_at: Date | string;
+}): RadarVersionInfo {
+  return {
+    versionId: v.id,
+    version: v.version,
+    label: v.label,
+    releaseDate: toIsoDate(v.release_date),
+    createdAt: toIsoDateTime(v.created_at),
+    updatedAt: toIsoDateTime(v.updated_at),
+  };
+}
 
 export async function getAllRadars(): Promise<BasicRadarInfo[]> {
   const radars = await db
@@ -110,50 +139,192 @@ export async function getAllRadars(): Promise<BasicRadarInfo[]> {
     .orderBy("name asc")
     .orderBy("id asc")
     .execute();
-  return radars;
+
+  const result: BasicRadarInfo[] = [];
+  for (const r of radars) {
+    const latest = await db
+      .selectFrom("radar_version")
+      .select(["id", "version", "label", "release_date", "created_at", "updated_at"])
+      .where("radar_id", "=", r.id)
+      .orderBy("version", "desc")
+      .limit(1)
+      .executeTakeFirst();
+    result.push({
+      id: r.id,
+      name: r.name,
+      latestVersion: latest ? mapVersionInfo(latest) : null,
+    });
+  }
+  return result;
 }
 
-export async function updateBlip(radarId: number, techId: number, ring: number): Promise<void> {
+export async function getLatestVersionId(radarId: number): Promise<number> {
+  const v = await db
+    .selectFrom("radar_version")
+    .select(["id"])
+    .where("radar_id", "=", radarId)
+    .orderBy("version", "desc")
+    .limit(1)
+    .executeTakeFirstOrThrow();
+  return v.id;
+}
+
+export async function updateBlip(
+  radarVersionId: number,
+  techId: number,
+  ring: number,
+): Promise<void> {
   if (isNaN(ring)) {
     await db
       .deleteFrom("blip")
-      .where("radar_id", "=", radarId)
+      .where("radar_version_id", "=", radarVersionId)
       .where("tech_id", "=", techId)
       .execute();
-
-    return;
+  } else {
+    try {
+      await db
+        .insertInto("blip")
+        .values({
+          radar_version_id: radarVersionId,
+          tech_id: techId,
+          ring,
+        })
+        .execute();
+    } catch {
+      await db
+        .updateTable("blip")
+        .set({ ring })
+        .where("radar_version_id", "=", radarVersionId)
+        .where("tech_id", "=", techId)
+        .execute();
+    }
   }
 
-  try {
-    await db
-      .insertInto("blip")
-      .values({
-        radar_id: radarId,
-        tech_id: techId,
-        ring,
-      })
-      .execute();
-  } catch {
-    await db
-      .updateTable("blip")
-      .set({ ring })
-      .where("radar_id", "=", radarId)
-      .where("tech_id", "=", techId)
-      .execute();
-  }
+  await db
+    .updateTable("radar_version")
+    .set({ updated_at: new Date() })
+    .where("id", "=", radarVersionId)
+    .execute();
 }
 
-export async function createRadar(id: number): Promise<RadarData> {
+export async function releaseNewVersion(
+  radarId: number,
+  releaseDate: string,
+  label: string | null = null,
+  copyBlips = true,
+): Promise<RadarVersionInfo> {
+  const previous = await db
+    .selectFrom("radar_version")
+    .select(["id", "version"])
+    .where("radar_id", "=", radarId)
+    .orderBy("version", "desc")
+    .limit(1)
+    .executeTakeFirst();
+
+  const nextVersion = (previous?.version ?? 0) + 1;
+
+  const inserted = await db
+    .insertInto("radar_version")
+    .values({
+      radar_id: radarId,
+      version: nextVersion,
+      label,
+      release_date: releaseDate,
+    })
+    .returning(["id", "version", "label", "release_date", "created_at", "updated_at"])
+    .executeTakeFirstOrThrow();
+
+  if (copyBlips && previous) {
+    const previousBlips = await db
+      .selectFrom("blip")
+      .select(["tech_id", "ring"])
+      .where("radar_version_id", "=", previous.id)
+      .execute();
+
+    if (previousBlips.length > 0) {
+      await db
+        .insertInto("blip")
+        .values(
+          previousBlips.map(b => ({
+            radar_version_id: inserted.id,
+            tech_id: b.tech_id,
+            ring: b.ring,
+          })),
+        )
+        .execute();
+    }
+  }
+
+  return mapVersionInfo(inserted);
+}
+
+function rowMapper(row: ResultSetRow, prevRingByTech: Map<number, number>): RadarEntry {
+  let moved: 0 | -1 | 1 | 2 = 0;
+  if (prevRingByTech.size === 0) {
+    moved = 0;
+  } else if (!prevRingByTech.has(row.tech_id)) {
+    moved = 2;
+  } else {
+    const prev = prevRingByTech.get(row.tech_id)!;
+    if (row.ring < prev) moved = 1;
+    else if (row.ring > prev) moved = -1;
+  }
+
+  return {
+    id: row.id,
+    quadrant: row.quadrant as QuadrantId,
+    ring: row.ring as RingId,
+    name: row.name,
+    active: true,
+    moved,
+    url: row.url || `#`,
+    description: row.description,
+    techId: row.tech_id,
+  };
+}
+
+export async function getRadar(radarId: number, version?: number): Promise<RadarData> {
   const radar = await db
     .selectFrom("radar")
-    .select(["id", "name", "created_at"])
-    .where("id", "=", id)
+    .select(["id", "name"])
+    .where("id", "=", radarId)
     .executeTakeFirstOrThrow();
+
+  let radarVersionQuery = db
+    .selectFrom("radar_version")
+    .select(["id", "radar_id", "version", "label", "release_date", "created_at", "updated_at"])
+    .where("radar_id", "=", radarId);
+
+  radarVersionQuery =
+    version === undefined
+      ? radarVersionQuery.orderBy("version", "desc").limit(1)
+      : radarVersionQuery.where("version", "=", version);
+
+  const radarVersion = await radarVersionQuery.executeTakeFirstOrThrow();
+
+  // Previous version (one lower) for moved diff
+  const prevVersion = await db
+    .selectFrom("radar_version")
+    .select(["id"])
+    .where("radar_id", "=", radarId)
+    .where("version", "<", radarVersion.version)
+    .orderBy("version", "desc")
+    .limit(1)
+    .executeTakeFirst();
+
+  const prevRingByTech = new Map<number, number>();
+  if (prevVersion) {
+    const prevBlips = await db
+      .selectFrom("blip")
+      .select(["tech_id", "ring"])
+      .where("radar_version_id", "=", prevVersion.id)
+      .execute();
+    for (const b of prevBlips) prevRingByTech.set(b.tech_id, b.ring);
+  }
 
   const rows = await db
     .selectFrom("blip")
     .innerJoin("tech", "blip.tech_id", "tech.id")
-    .innerJoin("radar", "blip.radar_id", "radar.id")
     .select([
       "blip.id",
       "tech.name",
@@ -163,28 +334,39 @@ export async function createRadar(id: number): Promise<RadarData> {
       "tech.description",
       "blip.ring",
     ])
-    .where("radar.id", "=", id)
+    .where("blip.radar_version_id", "=", radarVersion.id)
     .orderBy("tech.quadrant asc")
     .orderBy("blip.ring asc")
     .orderBy("tech.name asc")
     .execute();
 
-  const techs = rows.map(row => rowMapper(row));
+  const techs = rows.map(row => rowMapper(row, prevRingByTech));
 
-  const now = DateTime.fromJSDate(radar.created_at as Date);
+  const allVersionsRows = await db
+    .selectFrom("radar_version")
+    .select(["id", "version", "label", "release_date", "created_at", "updated_at"])
+    .where("radar_id", "=", radarId)
+    .orderBy("version", "desc")
+    .execute();
 
   const quadrants = await getAllQuadrants();
   const rings = await getAllRings();
 
-  const ret = {
+  return {
     id: radar.id,
-    date: now.toISO(),
     name: radar.name,
+    date: toIsoDate(radarVersion.release_date),
     quadrants: quadrants.map(q => ({ name: q.name })),
     rings: rings.map(r => ({ name: r.name, color: r.color })),
     entries: techs,
     url: "https://dr-kobros.com",
+    version: radarVersion.version,
+    label: radarVersion.label,
+    releaseDate: toIsoDate(radarVersion.release_date),
+    versionId: radarVersion.id,
+    versions: allVersionsRows.map(mapVersionInfo),
   } satisfies RadarData;
-
-  return ret;
 }
+
+// Backwards-compat alias
+export const createRadar = getRadar;

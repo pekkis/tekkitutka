@@ -193,6 +193,27 @@ async function seed() {
     .onConflict(oc => oc.column("name").doNothing())
     .execute();
 
+  // Seed initial version (v1) for each radar that has none
+  const radarsWithoutVersion = await db
+    .selectFrom("radar")
+    .leftJoin("radar_version", "radar.id", "radar_version.radar_id")
+    .select(["radar.id"])
+    .where("radar_version.id", "is", null)
+    .execute();
+
+  if (radarsWithoutVersion.length > 0) {
+    await db
+      .insertInto("radar_version")
+      .values(
+        radarsWithoutVersion.map(r => ({
+          radar_id: r.id,
+          version: 1,
+          release_date: new Date().toISOString().slice(0, 10),
+        })),
+      )
+      .execute();
+  }
+
   console.log("seed data inserted successfully");
 
   await db.destroy();

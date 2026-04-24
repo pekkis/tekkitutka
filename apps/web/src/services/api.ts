@@ -10,12 +10,39 @@ const client = ky.create({
 
 export const api = {
   radars: {
-    getAll: () => client.get("api/radars").json<{ id: number; name: string }[]>(),
+    getAll: () => client.get("api/radars").json<RadarListItem[]>(),
 
-    get: (id: number) => client.get(`api/radars/${id}`).json<RadarData>(),
+    get: (id: number, version?: number) => {
+      const search = version === undefined ? "" : `?version=${version}`;
+      return client.get(`api/radars/${id}${search}`).json<RadarData>();
+    },
 
-    updateBlip: (radarId: number, techId: number, ring: number) =>
-      client.post(`api/radars/${radarId}/blips`, { json: { techId, ring } }).json<RadarData>(),
+    getVersion: (id: number, version: number) =>
+      client.get(`api/radars/${id}/versions/${version}`).json<RadarData>(),
+
+    releaseVersion: (
+      id: number,
+      releaseDate: string,
+      label?: string | null,
+      copyBlips = true,
+    ) =>
+      client
+        .post(`api/radars/${id}/versions`, {
+          json: { releaseDate, label: label ?? null, copyBlips },
+        })
+        .json<RadarVersionInfo>(),
+
+    updateBlip: (
+      radarId: number,
+      techId: number,
+      ring: number,
+      versionId?: number,
+    ) =>
+      client
+        .post(`api/radars/${radarId}/blips`, {
+          json: { techId, ring, ...(versionId === undefined ? {} : { versionId }) },
+        })
+        .json<RadarData>(),
   },
 
   techs: {
@@ -24,7 +51,9 @@ export const api = {
     get: (id: number) => client.get(`api/techs/${id}`).json<Tech>(),
 
     getRadars: (id: number) =>
-      client.get(`api/techs/${id}/radars`).json<{ id: number; name: string; ring: number }[]>(),
+      client
+        .get(`api/techs/${id}/radars`)
+        .json<{ id: number; name: string; ring: number; version: number }[]>(),
 
     create: (name: string, quadrant: number) =>
       client.post("api/techs", { json: { name, quadrant } }).json<Tech[]>(),
@@ -60,6 +89,21 @@ export type Ring = {
   color: string;
 };
 
+export type RadarVersionInfo = {
+  versionId: number;
+  version: number;
+  label: string | null;
+  releaseDate: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type RadarListItem = {
+  id: number;
+  name: string;
+  latestVersion: RadarVersionInfo | null;
+};
+
 export type RadarData = {
   id: number;
   name: string;
@@ -68,6 +112,11 @@ export type RadarData = {
   rings: Ring[];
   entries: RadarEntry[];
   url: string;
+  version: number;
+  label: string | null;
+  releaseDate: string;
+  versionId: number;
+  versions: RadarVersionInfo[];
 };
 
 export type Tech = {

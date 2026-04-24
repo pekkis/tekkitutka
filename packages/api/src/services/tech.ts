@@ -22,13 +22,15 @@ export async function getRadarsUsing(id: number): Promise<
     id: number;
     name: string;
     ring: number;
+    version: number;
   }[]
 > {
   const teams = await db
     .selectFrom("tech")
     .innerJoin("blip", "tech.id", "blip.tech_id")
-    .innerJoin("radar", "blip.radar_id", "radar.id")
-    .select(["radar.name", "radar.id", "blip.ring"])
+    .innerJoin("radar_version", "blip.radar_version_id", "radar_version.id")
+    .innerJoin("radar", "radar_version.radar_id", "radar.id")
+    .select(["radar.name", "radar.id", "blip.ring", "radar_version.version"])
     .where("tech.id", "=", id)
     .execute();
 

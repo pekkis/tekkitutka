@@ -32,12 +32,24 @@ CREATE TABLE radar (
     PRIMARY KEY(id)
 );
 
+CREATE TABLE radar_version (
+    id SERIAL NOT NULL,
+    radar_id INTEGER NOT NULL REFERENCES radar(id),
+    version INTEGER NOT NULL,
+    label VARCHAR(255) NULL,
+    release_date DATE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(radar_id, version),
+    PRIMARY KEY(id)
+);
+
 CREATE TABLE blip (
     id SERIAL NOT NULL,
     tech_id INTEGER NOT NULL REFERENCES tech(id),
-    radar_id INTEGER NOT NULL REFERENCES radar(id),
+    radar_version_id INTEGER NOT NULL REFERENCES radar_version(id),
     ring INTEGER NOT NULL REFERENCES ring(id),
-    UNIQUE(tech_id, radar_id),
+    UNIQUE(tech_id, radar_version_id),
     PRIMARY KEY(id)
 );
 

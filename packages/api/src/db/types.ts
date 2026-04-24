@@ -14,7 +14,7 @@ export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
 export interface Blip {
   id: Generated<number>;
-  radar_id: number;
+  radar_version_id: number;
   ring: number;
   tech_id: number;
 }
@@ -28,6 +28,16 @@ export interface Radar {
   created_at: Generated<Timestamp | null>;
   id: Generated<number>;
   name: string;
+}
+
+export interface RadarVersion {
+  id: Generated<number>;
+  radar_id: number;
+  version: number;
+  label: string | null;
+  release_date: ColumnType<Date, Date | string, Date | string>;
+  created_at: Generated<Timestamp>;
+  updated_at: Generated<Timestamp>;
 }
 
 export interface Ring {
@@ -50,6 +60,7 @@ export interface DB {
   blip: Blip;
   quadrant: Quadrant;
   radar: Radar;
+  radar_version: RadarVersion;
   ring: Ring;
   tech: Tech;
 }

@@ -1,8 +1,7 @@
-"use client";
-
 import RadarChart from "@/components/radar/RadarChart";
-import { api, RadarData, Tech } from "@/services/api";
-import { FC, useState } from "react";
+import { api } from "@/services/api";
+import type { RadarData, Tech } from "@/services/api";
+import { useState, type FC } from "react";
 
 import styles from "./Radar.module.css";
 import { groupBy } from "ramda";
@@ -18,14 +17,18 @@ const Radar: FC<Props> = ({ radar, techs }) => {
 
   const grouped = groupBy<Tech>((tech: Tech) => tech.quadrant.toString(), currentTechs);
 
-  const handleCreateTech = async (formData: FormData) => {
+  const handleCreateTech = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
     const name = formData.get("name") as string;
     const quadrant = parseInt(formData.get("quadrant") as string, 10);
     const updatedTechs = await api.techs.create(name, quadrant);
     setCurrentTechs(updatedTechs);
   };
 
-  const handleUpdateBlip = async (formData: FormData) => {
+  const handleUpdateBlip = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
     const techId = parseInt(formData.get("tech") as string, 10);
     const ring = parseInt(formData.get("ring") as string, 10);
     const updatedRadar = await api.radars.updateBlip(radar.id, techId, ring);
@@ -35,7 +38,7 @@ const Radar: FC<Props> = ({ radar, techs }) => {
   return (
     <>
       Create tech
-      <form className={styles.form} action={handleCreateTech}>
+      <form className={styles.form} onSubmit={handleCreateTech}>
         <input type="text" name="name" placeholder="Tech name" />
         <select name="quadrant">
           <option value="">Select a quadrant</option>
@@ -48,7 +51,7 @@ const Radar: FC<Props> = ({ radar, techs }) => {
         <button>add tech</button>
       </form>
       Position blip
-      <form className={styles.form} action={handleUpdateBlip}>
+      <form className={styles.form} onSubmit={handleUpdateBlip}>
         <select name="tech">
           <option value="">Select a tech</option>
 

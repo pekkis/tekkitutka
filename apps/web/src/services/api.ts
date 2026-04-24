@@ -1,53 +1,40 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+import ky from "ky";
 
-async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...init?.headers,
-    },
-  });
+const apiUrl = import.meta.env.SSR
+  ? process.env.API_URL || import.meta.env.PUBLIC_API_URL || "http://localhost:3001"
+  : import.meta.env.PUBLIC_API_URL || "http://localhost:3001";
 
-  if (!res.ok) {
-    throw new Error(`API error: ${res.status} ${res.statusText}`);
-  }
-
-  return res.json() as Promise<T>;
-}
+const client = ky.create({
+  prefix: apiUrl,
+});
 
 export const api = {
   radars: {
-    getAll: () => fetchJson<{ id: number; name: string }[]>("/api/radars"),
+    getAll: () => client.get("api/radars").json<{ id: number; name: string }[]>(),
 
-    get: (id: number) => fetchJson<RadarData>(`/api/radars/${id}`),
+    get: (id: number) => client.get(`api/radars/${id}`).json<RadarData>(),
 
     updateBlip: (radarId: number, techId: number, ring: number) =>
-      fetchJson<RadarData>(`/api/radars/${radarId}/blips`, {
-        method: "POST",
-        body: JSON.stringify({ techId, ring }),
-      }),
+      client.post(`api/radars/${radarId}/blips`, { json: { techId, ring } }).json<RadarData>(),
   },
 
   techs: {
-    getAll: () => fetchJson<Tech[]>("/api/techs"),
+    getAll: () => client.get("api/techs").json<Tech[]>(),
 
-    get: (id: number) => fetchJson<Tech>(`/api/techs/${id}`),
+    get: (id: number) => client.get(`api/techs/${id}`).json<Tech>(),
 
     getRadars: (id: number) =>
-      fetchJson<{ id: number; name: string; ring: number }[]>(`/api/techs/${id}/radars`),
+      client.get(`api/techs/${id}/radars`).json<{ id: number; name: string; ring: number }[]>(),
 
     create: (name: string, quadrant: number) =>
-      fetchJson<Tech[]>("/api/techs", {
-        method: "POST",
-        body: JSON.stringify({ name, quadrant }),
-      }),
+      client.post("api/techs", { json: { name, quadrant } }).json<Tech[]>(),
   },
 
   labels: {
-    quadrants: () => fetchJson<{ id: number; name: string }[]>("/api/labels/quadrants"),
+    quadrants: () => client.get("api/labels/quadrants").json<{ id: number; name: string }[]>(),
 
-    rings: () => fetchJson<{ id: number; name: string; color: string }[]>("/api/labels/rings"),
+    rings: () =>
+      client.get("api/labels/rings").json<{ id: number; name: string; color: string }[]>(),
   },
 };
 

@@ -1,4 +1,4 @@
-import { RadarConfiguration } from "@/services/api";
+import type { RadarConfiguration } from "@/services/api";
 import * as d3 from "d3";
 
 type RadarDefinition = Required<RadarConfiguration> & {

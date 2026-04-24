@@ -1,0 +1,19 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { api } from "@/services/api";
+
+const radars = await api.radars.getAll();
+---
+
+<Layout title="All tech radars">
+  <h1>All tech radars</h1>
+  <ul>
+    {
+      radars.map((radar) => (
+        <li>
+          <a href={`/radar/${radar.id}`}>{radar.name}</a>
+        </li>
+      ))
+    }
+  </ul>
+</Layout>

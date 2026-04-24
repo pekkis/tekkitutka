@@ -10,3 +10,5 @@ allowBuilds:
 disallowWorkspaceCycles: true
 
 minimumReleaseAge: 4320
+
+injectWorkspacePackages: true

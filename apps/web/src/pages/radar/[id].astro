@@ -1,0 +1,20 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Radar from "@/components/radar/Radar";
+import { api } from "@/services/api";
+
+const { id } = Astro.params;
+
+let radar;
+let techs;
+try {
+  radar = await api.radars.get(parseInt(id!, 10));
+  techs = await api.techs.getAll();
+} catch {
+  return new Response(null, { status: 404, statusText: "Not Found" });
+}
+---
+
+<Layout title={radar.name}>
+  <Radar radar={radar} techs={techs} client:load />
+</Layout>

@@ -1,18 +1,21 @@
 FROM node:24-alpine AS base
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+ENV npm_config_store_dir="/pnpm/store"
+RUN npm i -g pnpm
 
 # --- Dependencies ---
 FROM base AS deps
-RUN npm i -g pnpm
 WORKDIR /app
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/web/package.json ./apps/web/
 COPY packages/api/package.json ./packages/api/
-RUN pnpm install --frozen-lockfile
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm install --frozen-lockfile
 
 # --- Build ---
 FROM base AS builder
-RUN npm i -g pnpm
 WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
@@ -21,25 +24,26 @@ COPY apps/web/ ./apps/web/
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 RUN pnpm --filter @tekkitutka/web build
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm --filter @tekkitutka/web deploy --prod /out
 
 # --- Production ---
 FROM base AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
+ENV HOST=0.0.0.0
+ENV PORT=3000
 
 RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+RUN adduser --system --uid 1001 astro
 
-COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
+COPY --from=builder --chown=astro:nodejs /out/node_modules ./node_modules
+COPY --from=builder --chown=astro:nodejs /out/package.json ./package.json
+COPY --from=builder --chown=astro:nodejs /app/apps/web/dist ./dist
 
-USER nextjs
+USER astro
 
 EXPOSE 3000
 
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
-
-CMD ["node", "apps/web/server.js"]
+CMD ["node", "./dist/server/entry.mjs"]

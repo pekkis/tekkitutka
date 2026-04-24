@@ -1,0 +1,48 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { api } from "@/services/api";
+
+const { id } = Astro.params;
+const techId = parseInt(id!, 10);
+
+let tech;
+let radars;
+let rings;
+try {
+  tech = await api.techs.get(techId);
+  radars = await api.techs.getRadars(techId);
+  rings = await api.labels.rings();
+} catch {
+  return new Response(null, { status: 404, statusText: "Not Found" });
+}
+---
+
+<Layout title={tech.name}>
+  <section>
+    <h1>{tech.name}</h1>
+
+    <p>{tech.description}</p>
+
+    {
+      tech.url && (
+        <p>
+          <a href={tech.url} target="_blank" rel="noopener noreferrer">
+            {tech.url}
+          </a>
+        </p>
+      )
+    }
+
+    <h2>Radars containing this tech</h2>
+
+    <ul>
+      {
+        radars.map((radar) => (
+          <li>
+            <a href={`/radar/${radar.id}`}>{radar.name}</a> - {rings[radar.ring].name}
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+</Layout>

@@ -1,13 +1,17 @@
 FROM node:24-alpine AS base
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+ENV npm_config_store_dir="/pnpm/store"
+RUN npm i -g pnpm
 
 # --- Dependencies ---
 FROM base AS deps
-RUN npm i -g pnpm
 WORKDIR /app
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/api/package.json ./packages/api/
-RUN pnpm install --frozen-lockfile
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm install --frozen-lockfile
 
 # --- Migrator ---
 FROM base AS migrator
